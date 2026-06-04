@@ -1,4 +1,6 @@
-# 비전캐처 정적 랜딩페이지
+# VisionCatcher
+
+비전캐처(Vision Catcher) 공식 랜딩페이지 — 정적 HTML/CSS/JS
 
 ## 구성 파일
 - `index.html`: 메인 랜딩페이지
