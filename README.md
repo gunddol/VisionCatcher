@@ -17,15 +17,21 @@
 2. Netlify / Vercel / Cloudflare Pages에 업로드
 3. Nginx 또는 Apache 정적 파일 서버에 업로드
 
-## 이미지 처리
+## 이미지와 포트폴리오 처리
 현재 코드는 기존 Cafe24 이미지 URL을 외부 링크로 참조합니다. 완전 독립형으로 운영하려면 기존 이미지 파일을 다운로드하여 `assets/` 폴더에 넣고 CSS/HTML의 이미지 경로를 로컬 경로로 바꾸면 됩니다.
+
+포트폴리오는 별도 업로드 기능보다 인스타그램 게시글을 중심으로 보여주는 구조입니다. 실제 게시글을 사이트 안에 자동 노출하려면 아래 중 하나가 필요합니다.
+
+1. Instagram Graph API를 사용할 수 있는 비즈니스/크리에이터 계정과 액세스 토큰
+2. 사이트에 노출할 개별 인스타그램 게시글 URL 목록
+3. 외부 위젯 서비스 또는 자체 서버를 통한 피드 캐싱
 
 ## SEO 반영 사항
 - 쇼핑몰 회원가입/장바구니/주문조회 관련 요소 제거
-- title, description, canonical, Open Graph 메타태그 적용
-- LocalBusiness 구조화 데이터 적용
+- 회사소개서 2026 기준 title, description, canonical, Open Graph 메타태그 적용
+- 회사소개서 2026 기준 LocalBusiness 구조화 데이터, 주소, 연락처, 대표 사업 영역 반영
 - robots.txt, sitemap.xml 포함
 
 ## 추후 연결 권장
 - 문의 폼을 실제 접수하려면 Formspree, Netlify Forms, Google Apps Script, 자체 API 중 하나와 연결하면 됩니다.
-- 포트폴리오를 자주 업데이트하려면 Notion, Google Sheet, Headless CMS 중 하나로 관리하는 방식을 권장합니다.
+- 인스타그램 자동 피드는 브라우저에서 직접 가져오기보다 서버/API 레이어에서 캐싱해 노출하는 방식을 권장합니다.

@@ -3,6 +3,8 @@ const menuButton = document.querySelector('[data-menu-button]');
 const mobileMenu = document.querySelector('[data-mobile-menu]');
 const heroSlides = [...document.querySelectorAll('.hero-bg')];
 const slideButtons = [...document.querySelectorAll('[data-slide]')];
+const filterTabs = [...document.querySelectorAll('[data-filter]')];
+const portfolioItems = [...document.querySelectorAll('[data-portfolio-gallery] .gallery-item')];
 let currentSlide = 0;
 let slideTimer;
 
@@ -46,3 +48,20 @@ slideButtons.forEach((button) => {
 });
 
 if (heroSlides.length > 1) startSlideTimer();
+
+filterTabs.forEach((tab) => {
+  tab.addEventListener('click', () => {
+    const filter = tab.dataset.filter;
+
+    filterTabs.forEach((button) => {
+      const isActive = button === tab;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-selected', String(isActive));
+    });
+
+    portfolioItems.forEach((item) => {
+      const shouldShow = filter === 'all' || item.dataset.category === filter;
+      item.hidden = !shouldShow;
+    });
+  });
+});
