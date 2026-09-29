@@ -5,11 +5,12 @@ const heroSlides = [...document.querySelectorAll('.hero-bg')];
 const slideButtons = [...document.querySelectorAll('[data-slide]')];
 const filterTabs = [...document.querySelectorAll('[data-filter]')];
 const portfolioItems = [...document.querySelectorAll('[data-portfolio-gallery] .gallery-item')];
+const isInnerPage = document.body.classList.contains('inner-page') || document.body.classList.contains('page-portfolio');
 let currentSlide = 0;
 let slideTimer;
 
 function syncHeader() {
-  header?.classList.toggle('is-scrolled', window.scrollY > 10);
+  header?.classList.toggle('is-scrolled', isInnerPage || window.scrollY > 10);
 }
 
 function openSlide(index) {

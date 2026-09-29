@@ -4,9 +4,12 @@
 
 ## 구성 파일
 - `index.html`: 메인 랜딩페이지
+- `about.html`: 회사소개, 경쟁력, 연혁
+- `business.html`: 사업소개, 제작 프로세스, 행사 유형
 - `portfolio.html`: 포트폴리오 상세 페이지
+- `contact.html`: 문의 정보
 - `styles.css`: 반응형 스타일
-- `script.js`: 모바일 메뉴, 히어로 슬라이드
+- `script.js`: 모바일 메뉴, 히어로 슬라이드, 포트폴리오 필터, 내부 페이지 헤더 상태
 - `robots.txt`: 검색엔진 크롤링 설정
 - `sitemap.xml`: 기본 사이트맵
 
@@ -30,6 +33,7 @@
 - 쇼핑몰 회원가입/장바구니/주문조회 관련 요소 제거
 - 회사소개서 2026 기준 title, description, canonical, Open Graph 메타태그 적용
 - 회사소개서 2026 기준 LocalBusiness 구조화 데이터, 주소, 연락처, 대표 사업 영역 반영
+- 원페이지 구조를 홈 허브 + 회사소개/사업소개/포트폴리오/문의 상세 페이지 구조로 분리
 - robots.txt, sitemap.xml 포함
 
 ## 추후 연결 권장
