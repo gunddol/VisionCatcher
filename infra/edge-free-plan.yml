@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Vision Catcher Route 53, WAF, and CloudFront Free pricing plan
+
+Parameters:
+  DomainName:
+    Type: String
+    Default: visioncatcher.kr
+  DistributionId:
+    Type: String
+  DistributionDomainName:
+    Type: String
+  EnableFreePlan:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+Conditions:
+  CreateFreePlan: !Equals [!Ref EnableFreePlan, 'true']
+
+Resources:
+  WebAcl:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: !Sub '${AWS::StackName}-web-acl'
+      Description: Dedicated WAF for the Vision Catcher CloudFront Free plan
+      Scope: CLOUDFRONT
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: visioncatcherWebAcl
+      Tags:
+        - Key: Project
+          Value: VisionCatcher
+
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Name: !Sub '${DomainName}.'
+      HostedZoneConfig:
+        Comment: Vision Catcher production DNS, covered by CloudFront Free plan
+      HostedZoneTags:
+        - Key: Project
+          Value: VisionCatcher
+
+  SiteRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      RecordSets:
+        - Name: !Sub '${DomainName}.'
+          Type: A
+          AliasTarget:
+            DNSName: !Ref DistributionDomainName
+            HostedZoneId: Z2FDTNDATAQYW2
+            EvaluateTargetHealth: false
+        - Name: !Sub '${DomainName}.'
+          Type: AAAA
+          AliasTarget:
+            DNSName: !Ref DistributionDomainName
+            HostedZoneId: Z2FDTNDATAQYW2
+            EvaluateTargetHealth: false
+        - Name: !Sub 'www.${DomainName}.'
+          Type: A
+          AliasTarget:
+            DNSName: !Ref DistributionDomainName
+            HostedZoneId: Z2FDTNDATAQYW2
+            EvaluateTargetHealth: false
+        - Name: !Sub 'www.${DomainName}.'
+          Type: AAAA
+          AliasTarget:
+            DNSName: !Ref DistributionDomainName
+            HostedZoneId: Z2FDTNDATAQYW2
+            EvaluateTargetHealth: false
+        - Name: !Sub '${DomainName}.'
+          Type: MX
+          TTL: 300
+          ResourceRecords:
+            - 10 kr1-aspmx1.worksmobile.com.
+            - 20 kr1-aspmx2.worksmobile.com.
+        - Name: !Sub '_d3e6d816696ca8aadc0a83815eca77ec.${DomainName}.'
+          Type: CNAME
+          TTL: 300
+          ResourceRecords:
+            - _bc32a05b5637f5abd781fdf59da0d2ed.wzccmgtwzk.acm-validations.aws.
+        - Name: !Sub '_aebf6fcb4afde6867f5de7bacabf18b8.www.${DomainName}.'
+          Type: CNAME
+          TTL: 300
+          ResourceRecords:
+            - _09ddb7d923f78968549d716cf3967b2f.wzccmgtwzk.acm-validations.aws.
+
+  FreePlanSubscription:
+    Type: AWS::PricingPlanManager::Subscription
+    Condition: CreateFreePlan
+    Properties:
+      PlanFamily: CloudFront
+      PlanTier: FREE
+      UsageLevel: DEFAULT
+      ResourceArns:
+        - !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${DistributionId}'
+        - !GetAtt WebAcl.Arn
+        - !Sub 'arn:${AWS::Partition}:route53:::hostedzone/${HostedZone}'
+
+Outputs:
+  WebAclArn:
+    Description: WAF ARN to associate with the CloudFront distribution
+    Value: !GetAtt WebAcl.Arn
+  HostedZoneId:
+    Description: Route 53 public hosted zone ID
+    Value: !Ref HostedZone
+  NameServers:
+    Description: Set these four name servers at Cafe24
+    Value: !Join [',', !GetAtt HostedZone.NameServers]
+  FreePlanSubscriptionArn:
+    Condition: CreateFreePlan
+    Description: Active CloudFront Free plan subscription ARN
+    Value: !Ref FreePlanSubscription
+

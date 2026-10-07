@@ -20,6 +20,8 @@
 2. Netlify / Vercel / Cloudflare Pages에 업로드
 3. Nginx 또는 Apache 정적 파일 서버에 업로드
 
+현재 운영 배포의 기준 도메인은 `https://visioncatcher.kr`입니다. AWS 운영 환경은 비공개 S3 버킷과 CloudFront를 사용하며, `main` 브랜치 변경 시 GitHub Actions가 OIDC 임시 자격 증명으로 자동 배포합니다. 상세 구성과 절차는 `docs/AWS_DEPLOYMENT_PLAN.md` 및 `infra/static-site.yml`을 참고하세요.
+
 ## 이미지와 포트폴리오 처리
 현재 코드는 기존 Cafe24 이미지 URL을 외부 링크로 참조합니다. 완전 독립형으로 운영하려면 기존 이미지 파일을 다운로드하여 `assets/` 폴더에 넣고 CSS/HTML의 이미지 경로를 로컬 경로로 바꾸면 됩니다.
 

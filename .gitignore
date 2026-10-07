@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Editors and local tooling
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Logs and temporary files
+*.log
+tmp/
+.tmp/
+
+# Optional JavaScript tooling
+node_modules/
+dist/
+coverage/
+
+# Infrastructure build artifacts
+.aws-sam/
+cdk.out/
+.terraform/
+*.tfstate
+*.tfstate.*
+
