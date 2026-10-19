@@ -44,8 +44,21 @@ function buildInstagramCard(post, index) {
   link.style.setProperty('--feed-index', String(Math.min(index, 8)));
 
   const thumb = document.createElement('div');
-  thumb.className = 'gallery-thumb';
-  thumb.style.setProperty('--thumb', `url("${String(post.imageUrl).replace(/["\\]/g, '\\$&')}")`);
+  thumb.className = 'gallery-thumb gallery-thumb--image';
+  const image = document.createElement('img');
+  image.className = 'gallery-thumb-image';
+  image.src = post.imageUrl;
+  image.alt = truncateText(post.caption, 80) || '비전캐처 Instagram 현장 사진';
+  image.loading = index < 2 ? 'eager' : 'lazy';
+  image.decoding = 'async';
+  image.width = 720;
+  image.height = 720;
+  if (index === 0) image.fetchPriority = 'high';
+  image.addEventListener('error', () => {
+    thumb.classList.add('has-image-error');
+    image.remove();
+  }, { once: true });
+  thumb.append(image);
 
   if (post.mediaType === 'VIDEO') {
     const mediaBadge = document.createElement('span');
@@ -79,13 +92,20 @@ function buildInstagramCard(post, index) {
 async function loadInstagramFeed() {
   if (!portfolioGallery) return;
   try {
-    const response = await fetch('/instagram-feed.json', { cache: 'no-store' });
+    const feedUrl = new URL('portfolio-feed.json', document.baseURI);
+    feedUrl.searchParams.set('v', String(Date.now()));
+    const response = await fetch(feedUrl, {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const feed = await response.json();
     if (!Array.isArray(feed.posts) || !feed.posts.length) throw new Error('Empty feed');
     const fragment = document.createDocumentFragment();
     feed.posts.forEach((post, index) => fragment.append(buildInstagramCard(post, index)));
     portfolioGallery.replaceChildren(fragment);
+    portfolioGallery.dataset.feedLoaded = 'true';
     applyPortfolioFilter();
     if (feedStatus) {
       const updated = new Date(feed.generatedAt);

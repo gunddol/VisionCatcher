@@ -26,10 +26,10 @@
 
 ## Instagram 포트폴리오 자동 연동
 
-EventBridge가 6시간마다 Lambda를 실행합니다. Lambda는 Instagram API에서 최근 게시물을 읽고 대표 이미지를 사이트 S3 버킷에 복사한 뒤 `/instagram-feed.json`을 갱신합니다. 브라우저는 Instagram API나 액세스 토큰에 직접 접근하지 않습니다. API 장애 시에는 `portfolio.html`의 대표 작업 카드가 대체 콘텐츠로 유지됩니다.
+EventBridge가 6시간마다 Lambda를 실행합니다. Lambda는 Instagram API에서 최근 게시물을 읽고 대표 이미지를 사이트 S3 버킷에 복사한 뒤 `/portfolio-feed.json`을 갱신합니다. 브라우저는 Instagram API나 액세스 토큰에 직접 접근하지 않습니다. API 장애 시에는 `portfolio.html`의 대표 작업 카드가 대체 콘텐츠로 유지됩니다.
 
 - 토큰: SSM Parameter Store `/visioncatcher/instagram/access-token` (`SecureString`)
-- 공개 데이터: S3의 `instagram-feed.json`, `instagram-media/`
+- 공개 데이터: S3의 `portfolio-feed.json`, `portfolio-media/`
 - 토큰 갱신: Lambda가 7일 간격으로 장기 토큰 갱신을 시도
 - 피드 갱신: EventBridge `rate(6 hours)`
 - 로그 보존: CloudWatch Logs 14일

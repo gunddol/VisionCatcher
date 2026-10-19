@@ -49,14 +49,14 @@ Resources:
                 Resource: !Sub 'arn:${AWS::Partition}:s3:::${SiteBucketName}'
                 Condition:
                   StringLike:
-                    s3:prefix: instagram-media/*
+                    s3:prefix: portfolio-media/*
               - Effect: Allow
                 Action:
                   - s3:GetObject
                   - s3:PutObject
                 Resource:
-                  - !Sub 'arn:${AWS::Partition}:s3:::${SiteBucketName}/instagram-feed.json'
-                  - !Sub 'arn:${AWS::Partition}:s3:::${SiteBucketName}/instagram-media/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${SiteBucketName}/portfolio-feed.json'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${SiteBucketName}/portfolio-media/*'
 
   InstagramFeedFunction:
     Type: AWS::Lambda::Function
@@ -74,8 +74,8 @@ Resources:
         Variables:
           SITE_BUCKET_NAME: !Ref SiteBucketName
           INSTAGRAM_TOKEN_PARAMETER: !Ref TokenParameterName
-          FEED_KEY: instagram-feed.json
-          MEDIA_PREFIX: instagram-media/
+          FEED_KEY: portfolio-feed.json
+          MEDIA_PREFIX: portfolio-media/
           MAX_ITEMS: '18'
           GRAPH_API_VERSION: v24.0
           REFRESH_AFTER_DAYS: '7'
@@ -133,4 +133,4 @@ Outputs:
   TokenParameterName:
     Value: !Ref TokenParameterName
   FeedUrl:
-    Value: /instagram-feed.json
+    Value: /portfolio-feed.json

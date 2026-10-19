@@ -6,8 +6,8 @@ const ssm = new SSMClient({});
 
 const bucketName = process.env.SITE_BUCKET_NAME;
 const parameterName = process.env.INSTAGRAM_TOKEN_PARAMETER;
-const feedKey = process.env.FEED_KEY || 'instagram-feed.json';
-const mediaPrefix = process.env.MEDIA_PREFIX || 'instagram-media/';
+const feedKey = process.env.FEED_KEY || 'portfolio-feed.json';
+const mediaPrefix = process.env.MEDIA_PREFIX || 'portfolio-media/';
 const graphVersion = process.env.GRAPH_API_VERSION || 'v24.0';
 const maxItems = Number(process.env.MAX_ITEMS || 18);
 const refreshAfterDays = Number(process.env.REFRESH_AFTER_DAYS || 7);
