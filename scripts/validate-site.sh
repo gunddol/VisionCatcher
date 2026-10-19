@@ -24,6 +24,7 @@ for file in "${required_files[@]}"; do
 done
 
 node --check script.js
+node --check lambda/instagram-feed/index.mjs
 
 if grep -R "visioncatcher\.co\.kr" \
   --include='*.html' --include='*.xml' --include='*.txt' .; then
@@ -33,6 +34,11 @@ fi
 
 if ! grep -q "https://visioncatcher.kr/" sitemap.xml; then
   echo "The production domain is missing from sitemap.xml." >&2
+  exit 1
+fi
+
+if grep -R "instagram.com/vision_catcher_" --include='*.html' .; then
+  echo "Legacy Instagram username remains in a deployable file." >&2
   exit 1
 fi
 

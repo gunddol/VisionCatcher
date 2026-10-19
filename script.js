@@ -4,7 +4,8 @@ const mobileMenu = document.querySelector('[data-mobile-menu]');
 const heroSlides = [...document.querySelectorAll('.hero-bg')];
 const slideButtons = [...document.querySelectorAll('[data-slide]')];
 const filterTabs = [...document.querySelectorAll('[data-filter]')];
-const portfolioItems = [...document.querySelectorAll('[data-portfolio-gallery] .gallery-item')];
+const portfolioGallery = document.querySelector('[data-portfolio-gallery]');
+const feedStatus = document.querySelector('[data-feed-status]');
 const isInnerPage = document.body.classList.contains('inner-page') || document.body.classList.contains('page-portfolio');
 const menuLabel = document.querySelector('[data-menu-label]');
 if (isInnerPage) {
@@ -16,6 +17,91 @@ const hero = document.querySelector('.hero-renewal');
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let currentSlide = 0;
 let slideTimer;
+let activePortfolioFilter = 'all';
+
+function getPortfolioItems() {
+  return [...document.querySelectorAll('[data-portfolio-gallery] .gallery-item')];
+}
+
+function applyPortfolioFilter() {
+  getPortfolioItems().forEach((item) => {
+    item.hidden = activePortfolioFilter !== 'all' && item.dataset.category !== activePortfolioFilter;
+  });
+}
+
+function truncateText(value, length) {
+  const normalized = String(value || '').replace(/\s+/g, ' ').trim();
+  return normalized.length > length ? `${normalized.slice(0, length).trim()}…` : normalized;
+}
+
+function buildInstagramCard(post, index) {
+  const link = document.createElement('a');
+  link.className = 'gallery-item gallery-item--live';
+  link.href = post.permalink;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.dataset.category = post.category || 'performance';
+  link.style.setProperty('--feed-index', String(Math.min(index, 8)));
+
+  const thumb = document.createElement('div');
+  thumb.className = 'gallery-thumb';
+  thumb.style.setProperty('--thumb', `url("${String(post.imageUrl).replace(/["\\]/g, '\\$&')}")`);
+
+  if (post.mediaType === 'VIDEO') {
+    const mediaBadge = document.createElement('span');
+    mediaBadge.className = 'gallery-media-badge';
+    mediaBadge.textContent = 'PLAY';
+    thumb.append(mediaBadge);
+  } else if (post.mediaType === 'CAROUSEL_ALBUM') {
+    const mediaBadge = document.createElement('span');
+    mediaBadge.className = 'gallery-media-badge';
+    mediaBadge.textContent = 'ALBUM';
+    thumb.append(mediaBadge);
+  }
+
+  const body = document.createElement('div');
+  body.className = 'gallery-body';
+  const tag = document.createElement('span');
+  tag.className = 'gallery-tag';
+  tag.textContent = post.categoryLabel || '현장 기록';
+  const title = document.createElement('h3');
+  title.textContent = truncateText(post.caption, 58) || 'VISION CATCHER 현장 기록';
+  const date = document.createElement('p');
+  const published = new Date(post.timestamp);
+  date.textContent = Number.isNaN(published.getTime())
+    ? 'Instagram에서 게시글 보기'
+    : `${new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }).format(published)} · Instagram`;
+  body.append(tag, title, date);
+  link.append(thumb, body);
+  return link;
+}
+
+async function loadInstagramFeed() {
+  if (!portfolioGallery) return;
+  try {
+    const response = await fetch('/instagram-feed.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const feed = await response.json();
+    if (!Array.isArray(feed.posts) || !feed.posts.length) throw new Error('Empty feed');
+    const fragment = document.createDocumentFragment();
+    feed.posts.forEach((post, index) => fragment.append(buildInstagramCard(post, index)));
+    portfolioGallery.replaceChildren(fragment);
+    applyPortfolioFilter();
+    if (feedStatus) {
+      const updated = new Date(feed.generatedAt);
+      const updatedText = Number.isNaN(updated.getTime())
+        ? ''
+        : ` · ${new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(updated)} 업데이트`;
+      feedStatus.textContent = `Instagram 최신 게시물 ${feed.posts.length}개${updatedText}`;
+      feedStatus.classList.add('is-loaded');
+    }
+  } catch (error) {
+    if (feedStatus) feedStatus.textContent = '최신 피드를 불러오지 못해 대표 작업을 표시합니다.';
+    console.warn('Instagram feed fallback is active.', error.message);
+  } finally {
+    portfolioGallery.setAttribute('aria-busy', 'false');
+  }
+}
 
 function syncHeader() {
   header?.classList.toggle('is-scrolled', isInnerPage || window.scrollY > 10);
@@ -143,7 +229,7 @@ hero?.addEventListener('pointermove', (event) => {
 
 filterTabs.forEach((tab) => {
   tab.addEventListener('click', () => {
-    const filter = tab.dataset.filter;
+    activePortfolioFilter = tab.dataset.filter;
 
     filterTabs.forEach((button) => {
       const isActive = button === tab;
@@ -151,9 +237,8 @@ filterTabs.forEach((tab) => {
       button.setAttribute('aria-selected', String(isActive));
     });
 
-    portfolioItems.forEach((item) => {
-      const shouldShow = filter === 'all' || item.dataset.category === filter;
-      item.hidden = !shouldShow;
-    });
+    applyPortfolioFilter();
   });
 });
+
+loadInstagramFeed();

@@ -64,6 +64,15 @@ jobs:
               --cache-control "no-cache, max-age=0, must-revalidate"
           done
 
+      - name: Update Instagram feed Lambda code
+        run: |
+          zip -j /tmp/instagram-feed.zip lambda/instagram-feed/index.mjs
+          aws lambda update-function-code \
+            --function-name VisionCatcherInstagramFeed \
+            --zip-file fileb:///tmp/instagram-feed.zip \
+            --query 'FunctionArn' \
+            --output text
+
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \

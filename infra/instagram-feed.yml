@@ -1,0 +1,136 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Scheduled Instagram feed cache for the Vision Catcher static website
+
+Parameters:
+  SiteBucketName:
+    Type: String
+  CodeBucketName:
+    Type: String
+  CodeObjectKey:
+    Type: String
+    Default: deployment/instagram-feed.zip
+  TokenParameterName:
+    Type: String
+    Default: /visioncatcher/instagram/access-token
+  ScheduleExpression:
+    Type: String
+    Default: rate(6 hours)
+
+Resources:
+  InstagramFeedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: VisionCatcherInstagramFeedRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ReadAndRefreshInstagramToken
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:PutParameter
+                Resource: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${TokenParameterName}'
+        - PolicyName: ManageInstagramFeedCache
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${SiteBucketName}'
+                Condition:
+                  StringLike:
+                    s3:prefix: instagram-media/*
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::${SiteBucketName}/instagram-feed.json'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${SiteBucketName}/instagram-media/*'
+
+  InstagramFeedFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: VisionCatcherInstagramFeed
+      Description: Cache the latest Vision Catcher Instagram posts in the website bucket
+      Runtime: nodejs22.x
+      Handler: index.handler
+      Role: !GetAtt InstagramFeedRole.Arn
+      Timeout: 120
+      MemorySize: 256
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          SITE_BUCKET_NAME: !Ref SiteBucketName
+          INSTAGRAM_TOKEN_PARAMETER: !Ref TokenParameterName
+          FEED_KEY: instagram-feed.json
+          MEDIA_PREFIX: instagram-media/
+          MAX_ITEMS: '18'
+          GRAPH_API_VERSION: v24.0
+          REFRESH_AFTER_DAYS: '7'
+      Code:
+        S3Bucket: !Ref CodeBucketName
+        S3Key: !Ref CodeObjectKey
+      Tags:
+        - Key: Project
+          Value: VisionCatcher
+
+  InstagramFeedLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${InstagramFeedFunction}'
+      RetentionInDays: 14
+
+  InstagramFeedSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Refresh the public Instagram portfolio cache every six hours
+      ScheduleExpression: !Ref ScheduleExpression
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt InstagramFeedFunction.Arn
+          Id: InstagramFeedLambda
+
+  AllowEventBridgeInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref InstagramFeedFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt InstagramFeedSchedule.Arn
+
+  InstagramFeedFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Vision Catcher Instagram feed Lambda invocation errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref InstagramFeedFunction
+      Statistic: Sum
+      Period: 21600
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+Outputs:
+  FunctionName:
+    Value: !Ref InstagramFeedFunction
+  TokenParameterName:
+    Value: !Ref TokenParameterName
+  FeedUrl:
+    Value: /instagram-feed.json

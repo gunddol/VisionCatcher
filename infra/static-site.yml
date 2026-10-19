@@ -211,6 +211,12 @@ Resources:
                   - cloudfront:GetDistribution
                   - cloudfront:GetInvalidation
                 Resource: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${SiteDistribution}'
+              - Sid: UpdateInstagramFeedFunction
+                Effect: Allow
+                Action:
+                  - lambda:GetFunction
+                  - lambda:UpdateFunctionCode
+                Resource: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:VisionCatcherInstagramFeed'
       Tags:
         - Key: Project
           Value: VisionCatcher

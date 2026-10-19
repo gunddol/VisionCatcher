@@ -407,6 +407,12 @@ h2 { color: var(--text); font-size: clamp(34px, 4.2vw, 52px); }
 .filter-tab.is-active { color: var(--white); background: var(--blue-deep); }
 .portfolio-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .portfolio-gallery--instagram { margin-top: 18px; }
+.feed-status {
+  display: flex; align-items: center; gap: 9px; min-height: 24px; margin: 24px 0 0;
+  color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .04em;
+}
+.feed-status::before { content: ""; width: 7px; height: 7px; background: #a7afbd; border-radius: 50%; }
+.feed-status.is-loaded::before { background: #35c86f; box-shadow: 0 0 0 5px rgba(53,200,111,.12); }
 .instagram-panel {
   display: flex; align-items: flex-end; justify-content: space-between; gap: 32px;
   padding: clamp(36px, 5vw, 58px); color: var(--white); background: var(--ink-2);
@@ -418,6 +424,15 @@ h2 { color: var(--text); font-size: clamp(34px, 4.2vw, 52px); }
 .gallery-item { overflow: hidden; background: var(--white); border: 1px solid var(--line); transition: transform .35s var(--ease), box-shadow .35s ease; }
 .gallery-item:hover { transform: translateY(-5px); box-shadow: 0 22px 45px rgba(24,49,104,.12); }
 .gallery-thumb { aspect-ratio: 16/10.5; background: var(--surface-2) var(--thumb) center/cover no-repeat; filter: saturate(.78); transition: filter .3s ease, transform .5s var(--ease); }
+.gallery-item--live { animation: feed-card-in .6s var(--ease) both; animation-delay: calc(var(--feed-index) * 45ms); }
+.gallery-item--live .gallery-thumb { position: relative; aspect-ratio: 1/1; }
+.gallery-media-badge {
+  position: absolute; top: 14px; right: 14px; padding: 7px 9px; color: var(--white);
+  background: rgba(5,7,11,.76); font-size: 9px; font-weight: 850; letter-spacing: .12em;
+  backdrop-filter: blur(8px);
+}
+.gallery-item[hidden] { display: none; }
+@keyframes feed-card-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 .gallery-item:hover .gallery-thumb { filter: saturate(1); transform: scale(1.02); }
 .gallery-thumb--placeholder { position: relative; background: linear-gradient(145deg, #e6ecf7, #cad7ee); }
 .gallery-thumb--placeholder::before {

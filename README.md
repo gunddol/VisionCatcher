@@ -9,7 +9,9 @@
 - `portfolio.html`: 포트폴리오 상세 페이지
 - `contact.html`: 문의 정보
 - `styles.css`: 반응형 스타일
-- `script.js`: 모바일 메뉴, 히어로 슬라이드, 포트폴리오 필터, 내부 페이지 헤더 상태
+- `script.js`: 모바일 메뉴, 히어로 슬라이드, 포트폴리오 필터, Instagram 피드 렌더링
+- `lambda/instagram-feed/index.mjs`: Instagram 게시물·대표 이미지 동기화 Lambda
+- `infra/instagram-feed.yml`: Lambda, EventBridge, IAM, 로그 보존 정책
 - `robots.txt`: 검색엔진 크롤링 설정
 - `sitemap.xml`: 기본 사이트맵
 
@@ -22,14 +24,32 @@
 
 현재 운영 배포의 기준 도메인은 `https://visioncatcher.kr`입니다. AWS 운영 환경은 비공개 S3 버킷과 CloudFront를 사용하며, `main` 브랜치 변경 시 GitHub Actions가 OIDC 임시 자격 증명으로 자동 배포합니다. 상세 구성과 절차는 `docs/AWS_DEPLOYMENT_PLAN.md` 및 `infra/static-site.yml`을 참고하세요.
 
-## 이미지와 포트폴리오 처리
+## Instagram 포트폴리오 자동 연동
+
+EventBridge가 6시간마다 Lambda를 실행합니다. Lambda는 Instagram API에서 최근 게시물을 읽고 대표 이미지를 사이트 S3 버킷에 복사한 뒤 `/instagram-feed.json`을 갱신합니다. 브라우저는 Instagram API나 액세스 토큰에 직접 접근하지 않습니다. API 장애 시에는 `portfolio.html`의 대표 작업 카드가 대체 콘텐츠로 유지됩니다.
+
+- 토큰: SSM Parameter Store `/visioncatcher/instagram/access-token` (`SecureString`)
+- 공개 데이터: S3의 `instagram-feed.json`, `instagram-media/`
+- 토큰 갱신: Lambda가 7일 간격으로 장기 토큰 갱신을 시도
+- 피드 갱신: EventBridge `rate(6 hours)`
+- 로그 보존: CloudWatch Logs 14일
+
+토큰 교체:
+
+```bash
+./scripts/store-instagram-token.sh
+```
+
+인프라 수동 배포:
+
+```bash
+./scripts/deploy-instagram-feed.sh
+```
+
+`main` 브랜치 배포 시 GitHub Actions가 정적 사이트와 Lambda 코드를 함께 업데이트합니다. 토큰 값은 GitHub에 저장하지 않습니다.
+
+## 이미지 처리
 현재 코드는 기존 Cafe24 이미지 URL을 외부 링크로 참조합니다. 완전 독립형으로 운영하려면 기존 이미지 파일을 다운로드하여 `assets/` 폴더에 넣고 CSS/HTML의 이미지 경로를 로컬 경로로 바꾸면 됩니다.
-
-포트폴리오는 별도 업로드 기능보다 인스타그램 게시글을 중심으로 보여주는 구조입니다. 실제 게시글을 사이트 안에 자동 노출하려면 아래 중 하나가 필요합니다.
-
-1. Instagram Graph API를 사용할 수 있는 비즈니스/크리에이터 계정과 액세스 토큰
-2. 사이트에 노출할 개별 인스타그램 게시글 URL 목록
-3. 외부 위젯 서비스 또는 자체 서버를 통한 피드 캐싱
 
 ## SEO 반영 사항
 - 쇼핑몰 회원가입/장바구니/주문조회 관련 요소 제거
@@ -40,4 +60,3 @@
 
 ## 추후 연결 권장
 - 문의 폼을 실제 접수하려면 Formspree, Netlify Forms, Google Apps Script, 자체 API 중 하나와 연결하면 됩니다.
-- 인스타그램 자동 피드는 브라우저에서 직접 가져오기보다 서버/API 레이어에서 캐싱해 노출하는 방식을 권장합니다.
