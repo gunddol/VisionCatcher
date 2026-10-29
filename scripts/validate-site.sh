@@ -44,6 +44,11 @@ if grep -R "instagram.com/vision_catcher_" --include='*.html' .; then
   exit 1
 fi
 
+if grep -R "vl_ent@naver.com" --include='*.html' .; then
+  echo "The legacy contact email remains in a page." >&2
+  exit 1
+fi
+
 if grep -R -E 'assets/(logo_square|banner_logo)\.png' --include='*.html' .; then
   echo "A legacy logo is still referenced by a page." >&2
   exit 1
