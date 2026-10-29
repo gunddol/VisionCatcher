@@ -2,27 +2,33 @@
 
 비전캐처(Vision Catcher) 공식 랜딩페이지 — 정적 HTML/CSS/JS
 
-## 구성 파일
-- `index.html`: 메인 랜딩페이지
-- `about.html`: 회사소개, 경쟁력, 연혁
-- `business.html`: 사업소개, 제작 프로세스, 행사 유형
-- `portfolio.html`: 포트폴리오 상세 페이지
-- `contact.html`: 문의 정보
-- `styles.css`: 반응형 스타일
-- `script.js`: 모바일 메뉴, 히어로 슬라이드, 포트폴리오 필터, Instagram 피드 렌더링
-- `lambda/instagram-feed/index.mjs`: Instagram 게시물·대표 이미지 동기화 Lambda
-- `infra/instagram-feed.yml`: Lambda, EventBridge, IAM, 로그 보존 정책
-- `robots.txt`: 검색엔진 크롤링 설정
-- `sitemap.xml`: 기본 사이트맵
+## 프로젝트 구조
 
-## 배포 방법
-정적 사이트이므로 아래 중 하나에 업로드하면 됩니다.
+```text
+.
+├── index.html                 # 메인 랜딩페이지
+├── about.html                 # 회사소개·연혁
+├── business.html              # 사업 영역·제작 프로세스
+├── portfolio.html             # Instagram 연동 포트폴리오
+├── contact.html               # 문의 정보
+├── 404.html
+├── styles.css                 # 공통·반응형 스타일
+├── script.js                  # 메뉴·모션·피드·필터
+├── assets/                    # 실제 사용하는 로고와 파비콘
+├── lambda/instagram-feed/     # Instagram 동기화 Lambda
+├── infra/                     # AWS CloudFormation 템플릿
+├── scripts/                   # 검증·토큰 저장·수동 배포 도구
+├── docs/                      # 배포 계획 문서
+└── .github/workflows/         # 검증 및 운영 배포 CI/CD
+```
 
-1. Cafe24 웹호스팅의 루트 디렉터리에 파일 업로드
-2. Netlify / Vercel / Cloudflare Pages에 업로드
-3. Nginx 또는 Apache 정적 파일 서버에 업로드
+## 검증과 배포
 
-현재 운영 배포의 기준 도메인은 `https://visioncatcher.kr`입니다. AWS 운영 환경은 비공개 S3 버킷과 CloudFront를 사용하며, `main` 브랜치 변경 시 GitHub Actions가 OIDC 임시 자격 증명으로 자동 배포합니다. 상세 구성과 절차는 `docs/AWS_DEPLOYMENT_PLAN.md` 및 `infra/static-site.yml`을 참고하세요.
+```bash
+./scripts/validate-site.sh
+```
+
+운영 도메인은 `https://visioncatcher.kr`입니다. `main` 브랜치에 변경사항을 푸시하면 GitHub Actions가 정적 파일 검증 후 비공개 S3 버킷에 동기화하고 CloudFront 캐시를 무효화합니다. AWS 인증에는 장기 키 대신 GitHub OIDC 임시 자격 증명을 사용합니다. 상세 구성은 `docs/AWS_DEPLOYMENT_PLAN.md`와 `infra/static-site.yml`을 참고하세요.
 
 ## Instagram 포트폴리오 자동 연동
 
@@ -49,7 +55,8 @@ EventBridge가 6시간마다 Lambda를 실행합니다. Lambda는 Instagram API�
 `main` 브랜치 배포 시 GitHub Actions가 정적 사이트와 Lambda 코드를 함께 업데이트합니다. 토큰 값은 GitHub에 저장하지 않습니다.
 
 ## 이미지 처리
-현재 코드는 기존 Cafe24 이미지 URL을 외부 링크로 참조합니다. 완전 독립형으로 운영하려면 기존 이미지 파일을 다운로드하여 `assets/` 폴더에 넣고 CSS/HTML의 이미지 경로를 로컬 경로로 바꾸면 됩니다.
+
+브랜드 자산은 `assets/home_logo.png`, `assets/onlyV_logo.png`만 관리합니다. 현장 이미지는 현재 Cafe24 CDN URL을 사용하므로, 완전한 AWS 독립 운영이 필요하면 S3로 이전하고 HTML의 이미지 URL을 교체해야 합니다.
 
 ## SEO 반영 사항
 - 쇼핑몰 회원가입/장바구니/주문조회 관련 요소 제거

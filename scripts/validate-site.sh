@@ -12,9 +12,7 @@ required_files=(
   script.js
   robots.txt
   sitemap.xml
-  assets/banner_logo.png
   assets/home_logo.png
-  assets/logo_square.png
   assets/onlyV_logo.png
 )
 
@@ -27,6 +25,30 @@ done
 
 node --check script.js
 node --check lambda/instagram-feed/index.mjs
+
+node <<'NODE'
+const fs = require('fs');
+const path = require('path');
+const htmlFiles = fs.readdirSync('.').filter((file) => file.endsWith('.html'));
+const missing = [];
+
+for (const file of htmlFiles) {
+  const html = fs.readFileSync(file, 'utf8');
+  for (const match of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
+    const reference = match[1];
+    if (/^(?:https?:|mailto:|tel:|#)/.test(reference)) continue;
+    const localPath = reference.split(/[?#]/, 1)[0];
+    if (!localPath) continue;
+    const resolved = path.resolve(path.dirname(file), localPath);
+    if (!fs.existsSync(resolved)) missing.push(`${file}: ${reference}`);
+  }
+}
+
+if (missing.length) {
+  console.error(`Missing local references:\n${missing.join('\n')}`);
+  process.exit(1);
+}
+NODE
 
 if grep -R "visioncatcher\.co\.kr" \
   --include='*.html' --include='*.xml' --include='*.txt' .; then
@@ -49,7 +71,7 @@ if grep -R "vl_ent@naver.com" --include='*.html' .; then
   exit 1
 fi
 
-if grep -R -E 'assets/(logo_square|banner_logo)\.png' --include='*.html' .; then
+if grep -R -E 'assets/(logo_square|logo_bigV|banner_logo)\.png' --include='*.html' --include='*.css' --include='*.js' .; then
   echo "A legacy logo is still referenced by a page." >&2
   exit 1
 fi

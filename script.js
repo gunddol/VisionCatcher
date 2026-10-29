@@ -1,8 +1,6 @@
 const header = document.querySelector('[data-header]');
 const menuButton = document.querySelector('[data-menu-button]');
 const mobileMenu = document.querySelector('[data-mobile-menu]');
-const heroSlides = [...document.querySelectorAll('.hero-bg')];
-const slideButtons = [...document.querySelectorAll('[data-slide]')];
 const filterTabs = [...document.querySelectorAll('[data-filter]')];
 const portfolioGallery = document.querySelector('[data-portfolio-gallery]');
 const feedStatus = document.querySelector('[data-feed-status]');
@@ -13,10 +11,10 @@ if (isInnerPage) {
 }
 const revealItems = [...document.querySelectorAll('[data-reveal]')];
 const countItems = [...document.querySelectorAll('[data-count]')];
-const hero = document.querySelector('.hero-renewal');
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-let currentSlide = 0;
-let slideTimer;
+const numberFormat = new Intl.NumberFormat('ko-KR');
+const postDateFormat = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+const updatedDateFormat = new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 let activePortfolioFilter = 'all';
 
 function getPortfolioItems() {
@@ -83,7 +81,7 @@ function buildInstagramCard(post, index) {
   const published = new Date(post.timestamp);
   date.textContent = Number.isNaN(published.getTime())
     ? 'Instagram에서 게시글 보기'
-    : `${new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }).format(published)} · Instagram`;
+    : `${postDateFormat.format(published)} · Instagram`;
   body.append(tag, title, date);
   link.append(thumb, body);
   return link;
@@ -111,7 +109,7 @@ async function loadInstagramFeed() {
       const updated = new Date(feed.generatedAt);
       const updatedText = Number.isNaN(updated.getTime())
         ? ''
-        : ` · ${new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(updated)} 업데이트`;
+        : ` · ${updatedDateFormat.format(updated)} 업데이트`;
       feedStatus.textContent = `Instagram 최신 게시물 ${feed.posts.length}개${updatedText}`;
       feedStatus.classList.add('is-loaded');
     }
@@ -125,20 +123,6 @@ async function loadInstagramFeed() {
 
 function syncHeader() {
   header?.classList.toggle('is-scrolled', isInnerPage || window.scrollY > 10);
-}
-
-function openSlide(index) {
-  currentSlide = index;
-  heroSlides.forEach((slide, i) => slide.classList.toggle('is-active', i === index));
-  slideButtons.forEach((button, i) => button.classList.toggle('is-active', i === index));
-}
-
-function startSlideTimer() {
-  window.clearInterval(slideTimer);
-  if (reduceMotion.matches || heroSlides.length < 2 || document.hidden) return;
-  slideTimer = window.setInterval(() => {
-    openSlide((currentSlide + 1) % heroSlides.length);
-  }, 5200);
 }
 
 function closeMobileMenu() {
@@ -155,7 +139,7 @@ function animateCount(element) {
   element.dataset.counted = 'true';
   const target = Number(element.dataset.count);
   if (!Number.isFinite(target) || reduceMotion.matches) {
-    element.textContent = new Intl.NumberFormat('ko-KR').format(target);
+    element.textContent = numberFormat.format(target);
     return;
   }
   const duration = 1200;
@@ -163,7 +147,7 @@ function animateCount(element) {
   const tick = (now) => {
     const progress = Math.min((now - startedAt) / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3);
-    element.textContent = new Intl.NumberFormat('ko-KR').format(Math.round(target * eased));
+    element.textContent = numberFormat.format(Math.round(target * eased));
     if (progress < 1) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
@@ -198,21 +182,6 @@ document.addEventListener('click', (event) => {
   closeMobileMenu();
 });
 
-slideButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    openSlide(Number(button.dataset.slide));
-    startSlideTimer();
-  });
-});
-
-if (heroSlides.length > 1) {
-  startSlideTimer();
-  hero?.addEventListener('pointerenter', () => window.clearInterval(slideTimer));
-  hero?.addEventListener('pointerleave', startSlideTimer);
-  document.addEventListener('visibilitychange', startSlideTimer);
-  reduceMotion.addEventListener('change', startSlideTimer);
-}
-
 if ('IntersectionObserver' in window && !reduceMotion.matches) {
   const revealObserver = new IntersectionObserver((entries, observer) => {
     entries.forEach((entry) => {
@@ -238,14 +207,6 @@ if ('IntersectionObserver' in window && !reduceMotion.matches) {
   revealItems.forEach((item) => item.classList.add('is-visible'));
   countItems.forEach(animateCount);
 }
-
-hero?.addEventListener('pointermove', (event) => {
-  if (reduceMotion.matches) return;
-  const x = (event.clientX / window.innerWidth - 0.5) * 2;
-  const y = (event.clientY / window.innerHeight - 0.5) * 2;
-  hero.style.setProperty('--mx', x.toFixed(3));
-  hero.style.setProperty('--my', y.toFixed(3));
-});
 
 filterTabs.forEach((tab) => {
   tab.addEventListener('click', () => {
@@ -276,8 +237,6 @@ function initHeroShowreel() {
   let timer = 0;
   let userPaused = false;
   let inView = true;
-  const numberFormat = new Intl.NumberFormat('ko-KR');
-
   const steps = scenes.map((scene, index) => {
     const button = document.createElement('button');
     button.className = 'vc-hero-step';
