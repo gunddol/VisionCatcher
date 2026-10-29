@@ -1485,27 +1485,7 @@ h2 { color: var(--text); font-size: clamp(34px, 4.2vw, 52px); }
   .vc-hero-step.is-active span { transform: scaleX(1); animation: none; }
 }
 
-/* Home v4 — editorial sections and logo-matched navigation */
-.site-header,
-.site-header.is-scrolled,
-.page-portfolio .site-header,
-.inner-page .site-header,
-.home-page-v3 .site-header,
-.home-page-v3 .site-header.is-scrolled {
-  color: #111722; background: rgba(255, 255, 255, .97); border-color: #dfe3eb;
-  box-shadow: 0 1px 0 rgba(17, 23, 34, .04); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-}
-.site-header .nav { color: #626b7a; }
-.site-header .nav a:hover, .site-header .nav a[aria-current="page"] { color: #111722; }
-.site-header .nav a::after { background: #416ce2; }
-.site-header .header-tel { color: #315fd8; }
-.site-header .menu-button { color: #171d29; border-color: #d8dde6; }
-.site-header .mobile-menu { background: #fff; border-color: #d8dde6; box-shadow: 0 20px 50px rgba(23, 31, 48, .14); }
-.site-header .mobile-menu a { color: #242c3b; border-color: #e3e7ee; }
-.site-header .mobile-menu a:last-child { color: #315fd8; }
-.home-page-v3 .header-project { color: #fff; background: #416ce2; border-color: #416ce2; }
-.home-page-v3 .header-project:hover { color: #fff; background: #214fc5; border-color: #214fc5; }
-.brand-image img { background: #fff; }
+/* Home v4 — editorial sections */
 
 .service-showcase, .work-showcase, .process-showcase, .closing-showcase { padding-top: 108px; padding-bottom: 56px; }
 
