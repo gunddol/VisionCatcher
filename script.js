@@ -442,7 +442,7 @@ function initIntakeForms() {
       }
       const body = collectIntakeLines(form).join('\n');
       const mailto = `mailto:biz@visioncatcher.kr?subject=${encodeURIComponent('비전캐처 프로젝트 문의')}&body=${encodeURIComponent(body)}`;
-      if (status) status.textContent = '메일 작성 창을 열었습니다. 전송 전 내용을 한 번 확인해주세요.';
+      if (status) status.textContent = '문의 내용이 준비되었습니다. 확인 후 전송해주세요.';
       window.location.href = mailto;
     });
   });
