@@ -29,6 +29,7 @@ node --check lambda/instagram-feed/index.mjs
 node <<'NODE'
 const fs = require('fs');
 const path = require('path');
+const siteRoot = process.cwd();
 const htmlFiles = fs.readdirSync('.').filter((file) => file.endsWith('.html'));
 const missing = [];
 
@@ -39,7 +40,9 @@ for (const file of htmlFiles) {
     if (/^(?:https?:|mailto:|tel:|#)/.test(reference)) continue;
     const localPath = reference.split(/[?#]/, 1)[0];
     if (!localPath) continue;
-    const resolved = path.resolve(path.dirname(file), localPath);
+    const resolved = localPath.startsWith('/')
+      ? path.resolve(siteRoot, localPath.replace(/^\/+/, ''))
+      : path.resolve(path.dirname(file), localPath);
     if (!fs.existsSync(resolved)) missing.push(`${file}: ${reference}`);
   }
 }
