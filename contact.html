@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://file.cafe24cos.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-  <link rel="stylesheet" href="styles.css?v=20261029-5" />
+  <link rel="stylesheet" href="styles.css?v=20261029-7" />
 </head>
 <body class="inner-page">
   <a class="skip-link" href="#main">본문 바로가기</a>
@@ -74,6 +74,27 @@
       </div>
     </section>
 
+    <section class="section intake-section" aria-labelledby="intake-title">
+      <div class="container intake-shell">
+        <div class="intake-copy">
+          <p class="section-kicker">PROJECT INTAKE</p>
+          <h2 id="intake-title">문의 내용을 남기면<br>바로 메일로 정리됩니다.</h2>
+          <p>아직 확정된 내용이 없어도 괜찮습니다. 가능한 범위만 입력하면 상담에 필요한 기본 정보가 자동으로 메일 본문에 구성됩니다.</p>
+        </div>
+        <form class="project-form" data-intake-form data-form-name="프로젝트 문의">
+          <label><span>행사 유형</span><select name="event_type"><option>학교축제·정기공연</option><option>기업·기관 공식행사</option><option>공연·콘서트</option><option>종교행사·집회</option><option>중계·스트리밍</option><option>기타</option></select></label>
+          <label><span>예상 일정</span><input name="event_date" type="text" placeholder="예: 2026년 5월 20일" /></label>
+          <label><span>행사 장소</span><input name="event_venue" type="text" placeholder="예: 학교 강당, 호텔 볼룸, 야외광장" /></label>
+          <label><span>예상 인원</span><input name="audience" type="text" placeholder="예: 300명" /></label>
+          <fieldset><legend>필요 범위</legend><label><input type="checkbox" name="scope" value="기획·연출" /> 기획·연출</label><label><input type="checkbox" name="scope" value="무대" /> 무대</label><label><input type="checkbox" name="scope" value="음향" /> 음향</label><label><input type="checkbox" name="scope" value="조명" /> 조명</label><label><input type="checkbox" name="scope" value="중계·스트리밍" /> 중계·스트리밍</label><label><input type="checkbox" name="scope" value="영상·디자인" /> 영상·디자인</label></fieldset>
+          <label><span>연락처</span><input name="contact" type="text" placeholder="전화번호 또는 이메일" required /></label>
+          <label><span>요청 내용</span><textarea name="message" rows="5" placeholder="행사 목적, 원하는 분위기, 필요한 장비나 참고할 내용을 자유롭게 적어주세요."></textarea></label>
+          <button type="submit">문의 메일 작성하기</button>
+          <p class="form-status" data-form-status aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
     <section class="section cta-section">
       <div class="container cta-inner">
         <h2>상담 전에 알려주시면 좋은 정보</h2>
@@ -94,6 +115,7 @@
     </div>
     <div class="container footer-bottom"><span>Copyright © 비전캐처</span><a href="#main">맨 위로</a></div>
   </footer>
-  <script src="script.js?v=20261029-5" defer></script>
+  <div class="floating-cta" aria-label="빠른 문의"><a href="tel:1644-0271">전화</a><a href="https://pf.kakao.com/_JVXJb" target="_blank" rel="noopener">카카오톡</a><a href="#intake-title">문의서 작성</a></div>
+  <script src="script.js?v=20261029-7" defer></script>
 </body>
 </html>

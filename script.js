@@ -2,8 +2,10 @@ const header = document.querySelector('[data-header]');
 const menuButton = document.querySelector('[data-menu-button]');
 const mobileMenu = document.querySelector('[data-mobile-menu]');
 const filterTabs = [...document.querySelectorAll('[data-filter]')];
+const mediaTabs = [...document.querySelectorAll('[data-media]')];
 const portfolioGallery = document.querySelector('[data-portfolio-gallery]');
 const feedStatus = document.querySelector('[data-feed-status]');
+const feedEmpty = document.querySelector('[data-feed-empty]');
 const isInnerPage = document.body.classList.contains('inner-page') || document.body.classList.contains('page-portfolio');
 const menuLabel = document.querySelector('[data-menu-label]');
 if (isInnerPage) {
@@ -16,15 +18,36 @@ const numberFormat = new Intl.NumberFormat('ko-KR');
 const postDateFormat = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 const updatedDateFormat = new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 let activePortfolioFilter = 'all';
+let activeMediaFilter = 'all';
+const SCOPE_BY_CATEGORY = {
+  school: '기획 · 무대 · 음향 · 조명 · 운영',
+  performance: '음향 · 조명 · 중계 · 영상',
+  religion: '음향 · 중계 · 조명 · 시공',
+  corporate: '연출 · 중계 · 디자인 · 의전',
+};
 
 function getPortfolioItems() {
   return [...document.querySelectorAll('[data-portfolio-gallery] .gallery-item')];
 }
 
 function applyPortfolioFilter() {
-  getPortfolioItems().forEach((item) => {
-    item.hidden = activePortfolioFilter !== 'all' && item.dataset.category !== activePortfolioFilter;
+  const items = getPortfolioItems();
+  let visibleCount = 0;
+  items.forEach((item) => {
+    const categoryMatch = activePortfolioFilter === 'all' || item.dataset.category === activePortfolioFilter;
+    const mediaType = item.dataset.media || 'IMAGE';
+    const mediaMatch = activeMediaFilter === 'all'
+      || mediaType === activeMediaFilter
+      || (activeMediaFilter === 'IMAGE' && mediaType === 'CAROUSEL_ALBUM');
+    const hidden = !(categoryMatch && mediaMatch);
+    item.hidden = hidden;
+    if (!hidden) visibleCount += 1;
   });
+  if (feedEmpty) {
+    const showEmpty = items.length > 0 && visibleCount === 0;
+    feedEmpty.hidden = !showEmpty;
+    feedEmpty.classList.toggle('is-visible', showEmpty);
+  }
 }
 
 function truncateText(value, length) {
@@ -39,10 +62,13 @@ function buildInstagramCard(post, index) {
   link.target = '_blank';
   link.rel = 'noopener';
   link.dataset.category = post.category || 'performance';
+  link.dataset.media = post.mediaType === 'VIDEO' ? 'VIDEO' : 'IMAGE';
+  link.dataset.scope = SCOPE_BY_CATEGORY[link.dataset.category] || '기획 · 무대 · 기술 · 운영';
   link.style.setProperty('--feed-index', String(Math.min(index, 8)));
 
   const thumb = document.createElement('div');
   thumb.className = 'gallery-thumb gallery-thumb--image';
+  thumb.dataset.scope = link.dataset.scope;
   const image = document.createElement('img');
   image.className = 'gallery-thumb-image';
   image.src = post.imageUrl;
@@ -211,13 +237,23 @@ if ('IntersectionObserver' in window && !reduceMotion.matches) {
 filterTabs.forEach((tab) => {
   tab.addEventListener('click', () => {
     activePortfolioFilter = tab.dataset.filter;
-
     filterTabs.forEach((button) => {
       const isActive = button === tab;
       button.classList.toggle('is-active', isActive);
       button.setAttribute('aria-selected', String(isActive));
     });
+    applyPortfolioFilter();
+  });
+});
 
+mediaTabs.forEach((tab) => {
+  tab.addEventListener('click', () => {
+    activeMediaFilter = tab.dataset.media;
+    mediaTabs.forEach((button) => {
+      const isActive = button === tab;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-selected', String(isActive));
+    });
     applyPortfolioFilter();
   });
 });
@@ -379,5 +415,137 @@ function initSectionSnap() {
   }, { passive: false });
 }
 
+function collectIntakeLines(form) {
+  const data = new FormData(form);
+  const scopes = data.getAll('scope').filter(Boolean);
+  return [
+    `[${form.dataset.formName || '프로젝트 문의'}]`,
+    `행사 유형: ${data.get('event_type') || '-'}`,
+    `예상 일정: ${data.get('event_date') || '-'}`,
+    `행사 장소: ${data.get('event_venue') || '-'}`,
+    `예상 인원: ${data.get('audience') || '-'}`,
+    `필요 범위: ${scopes.length ? scopes.join(', ') : '-'}`,
+    `연락처: ${String(data.get('contact') || '').trim()}`,
+    `요청 내용: ${String(data.get('message') || '-').trim()}`,
+  ].filter((line) => !line.endsWith(': -') || line.startsWith('[') || line.startsWith('연락처') || line.startsWith('행사 유형'));
+}
+
+function initIntakeForms() {
+  document.querySelectorAll('[data-intake-form]').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const contact = String(new FormData(form).get('contact') || '').trim();
+      const status = form.querySelector('[data-form-status]');
+      if (!contact) {
+        if (status) status.textContent = '연락처를 입력해주세요.';
+        return;
+      }
+      const body = collectIntakeLines(form).join('\n');
+      const mailto = `mailto:biz@visioncatcher.kr?subject=${encodeURIComponent('비전캐처 프로젝트 문의')}&body=${encodeURIComponent(body)}`;
+      if (status) status.textContent = '메일 작성 창을 열었습니다. 전송 전 내용을 한 번 확인해주세요.';
+      window.location.href = mailto;
+    });
+  });
+}
+
+function prefillIntakeFromQuery() {
+  const form = document.querySelector('.project-form[data-intake-form]');
+  if (!form) return;
+  const params = new URLSearchParams(window.location.search);
+  const type = params.get('type');
+  const scope = params.get('scope');
+  const scale = params.get('scale');
+  const place = params.get('place');
+  const note = params.get('note');
+  if (type) {
+    const select = form.querySelector('[name="event_type"]');
+    const option = [...(select?.options || [])].find((item) => item.value === type || item.textContent === type);
+    if (option) select.value = option.value;
+  }
+  if (scope) {
+    const wanted = scope.split(/[·,]/).map((item) => item.trim()).filter(Boolean);
+    form.querySelectorAll('[name="scope"]').forEach((input) => {
+      input.checked = wanted.some((item) => input.value.includes(item) || item.includes(input.value));
+    });
+  }
+  if (scale && form.elements.audience && !form.elements.audience.value) form.elements.audience.value = scale;
+  if (place && form.elements.event_venue && !form.elements.event_venue.value) form.elements.event_venue.value = place;
+  if (note && form.elements.message && !form.elements.message.value) form.elements.message.value = note;
+}
+
+function initEventPlanner() {
+  const root = document.querySelector('[data-event-planner]');
+  if (!root) return;
+  const type = root.querySelector('[data-planner-type]');
+  const scale = root.querySelector('[data-planner-scale]');
+  const place = root.querySelector('[data-planner-place]');
+  const result = root.querySelector('[data-planner-result]');
+  const mail = root.querySelector('[data-planner-mail]');
+  if (!type || !scale || !place || !result || !mail) return;
+
+  const plans = {
+    school: {
+      title: '무대 · 음향 · 조명 · 현장 운영',
+      copy: '학교축제와 공연 흐름에 맞춰 출연진 전환, 리허설, 객석 동선까지 함께 설계합니다.',
+      items: ['큐시트 기반 진행', '공간 맞춤 음향', '조명 연출', '운영 스태프'],
+    },
+    corporate: {
+      title: '연출 · 중계 · 디자인 · 의전',
+      copy: '공식 행사의 브랜드 톤과 진행 안정성을 기준으로 화면, 음향, 동선을 맞춥니다.',
+      items: ['행사 목적별 연출안', '중계·송출 화면', '음향 안정화', '의전 동선'],
+    },
+    concert: {
+      title: '라이브 사운드 · 조명 · 영상',
+      copy: '아티스트와 관객 경험을 기준으로 무대 몰입도와 송출 품질을 함께 만듭니다.',
+      items: ['라이브 믹싱', '무대 조명', '영상 연동', '리허설 운영'],
+    },
+    religion: {
+      title: '음향 · 중계 · 조명 · 시공',
+      copy: '공간의 울림과 예배 흐름을 고려해 안정적인 전달 시스템을 구성합니다.',
+      items: ['공간 음향 튜닝', '화면 중계', '조명 구성', '필요 시 시공'],
+    },
+    streaming: {
+      title: '촬영 · 중계 · 음향 · 화면 구성',
+      copy: '현장감이 온라인에서도 유지되도록 촬영, 송출, 음향을 한 흐름으로 연결합니다.',
+      items: ['멀티 카메라', '송출 시스템', '음향 믹싱', '화면 그래픽'],
+    },
+  };
+
+  function renderPlanner() {
+    const plan = plans[type.value] || plans.school;
+    const extras = place.value === 'outdoor'
+      ? ['야외 전원', '우천 대비']
+      : place.value === 'hybrid'
+        ? ['현장+온라인 송출', '화면 구성']
+        : ['실내 튜닝'];
+    const scaleCopy = scale.value === 'large'
+      ? '대형 인원 기준으로 여유 장비와 운영 인력을 더합니다.'
+      : scale.value === 'small'
+        ? '소규모에 맞춰 꼭 필요한 범위만 제안합니다.'
+        : '중규모 행사의 안정적인 운영 구성을 기준으로 합니다.';
+    result.querySelector('h3').textContent = plan.title;
+    result.querySelector('p').textContent = `${plan.copy} ${scaleCopy}`;
+    result.querySelector('ul').replaceChildren(...[...plan.items, ...extras].map((item) => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      return li;
+    }));
+    const query = new URLSearchParams({
+      type: type.selectedOptions[0].textContent,
+      scope: plan.title.replace(/\s/g, ''),
+      scale: scale.selectedOptions[0].textContent,
+      place: place.selectedOptions[0].textContent,
+      note: `${plan.copy} ${scaleCopy}`,
+    });
+    mail.href = `contact.html?${query.toString()}#intake-title`;
+  }
+
+  [type, scale, place].forEach((field) => field.addEventListener('change', renderPlanner));
+  renderPlanner();
+}
+
 initHeroShowreel();
 initSectionSnap();
+initIntakeForms();
+prefillIntakeFromQuery();
+initEventPlanner();
