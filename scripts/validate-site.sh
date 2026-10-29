@@ -13,7 +13,9 @@ required_files=(
   robots.txt
   sitemap.xml
   assets/banner_logo.png
+  assets/home_logo.png
   assets/logo_square.png
+  assets/onlyV_logo.png
 )
 
 for file in "${required_files[@]}"; do
@@ -39,6 +41,11 @@ fi
 
 if grep -R "instagram.com/vision_catcher_" --include='*.html' .; then
   echo "Legacy Instagram username remains in a deployable file." >&2
+  exit 1
+fi
+
+if grep -R -E 'assets/(logo_square|banner_logo)\.png' --include='*.html' .; then
+  echo "A legacy logo is still referenced by a page." >&2
   exit 1
 fi
 

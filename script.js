@@ -155,7 +155,7 @@ function animateCount(element) {
   element.dataset.counted = 'true';
   const target = Number(element.dataset.count);
   if (!Number.isFinite(target) || reduceMotion.matches) {
-    element.textContent = String(target);
+    element.textContent = new Intl.NumberFormat('ko-KR').format(target);
     return;
   }
   const duration = 1200;
@@ -163,7 +163,7 @@ function animateCount(element) {
   const tick = (now) => {
     const progress = Math.min((now - startedAt) / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3);
-    element.textContent = String(Math.round(target * eased));
+    element.textContent = new Intl.NumberFormat('ko-KR').format(Math.round(target * eased));
     if (progress < 1) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
@@ -262,3 +262,163 @@ filterTabs.forEach((tab) => {
 });
 
 loadInstagramFeed();
+
+function initHeroShowreel() {
+  const showreel = document.querySelector('[data-hero-showreel]');
+  if (!showreel) return;
+
+  const scenes = [...showreel.querySelectorAll('[data-hero-scene]')];
+  const stepsRoot = showreel.querySelector('[data-hero-steps]');
+  const toggle = showreel.querySelector('[data-hero-toggle]');
+  if (!scenes.length || !stepsRoot || !toggle) return;
+
+  let activeIndex = 0;
+  let timer = 0;
+  let userPaused = false;
+  let inView = true;
+  const numberFormat = new Intl.NumberFormat('ko-KR');
+
+  const steps = scenes.map((scene, index) => {
+    const button = document.createElement('button');
+    button.className = 'vc-hero-step';
+    button.type = 'button';
+    button.setAttribute('aria-label', `${scene.dataset.label || `${index + 1}번째`} 장면 보기`);
+    button.innerHTML = '<span aria-hidden="true"></span>';
+    button.addEventListener('click', () => {
+      userPaused = false;
+      showScene(index);
+    });
+    stepsRoot.append(button);
+    return button;
+  });
+
+  function animateHeroCounts(scene) {
+    scene.querySelectorAll('[data-hero-count]').forEach((element) => {
+      const target = Number(element.dataset.heroCount);
+      if (!Number.isFinite(target)) return;
+      if (reduceMotion.matches) {
+        element.textContent = numberFormat.format(target);
+        return;
+      }
+      element.textContent = '0';
+      const startedAt = performance.now();
+      const duration = 1400;
+      const tick = (now) => {
+        if (!scene.classList.contains('is-active')) return;
+        const progress = Math.min((now - startedAt) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 4);
+        element.textContent = numberFormat.format(Math.round(target * eased));
+        if (progress < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }
+
+  function shouldPlay() {
+    return !userPaused && inView && !document.hidden && !reduceMotion.matches;
+  }
+
+  function syncToggle() {
+    const paused = !shouldPlay();
+    showreel.classList.toggle('is-paused', paused);
+    toggle.setAttribute('aria-label', userPaused ? '자동 재생' : '일시정지');
+    toggle.firstElementChild.textContent = userPaused ? '▶' : 'Ⅱ';
+  }
+
+  function scheduleNext() {
+    window.clearTimeout(timer);
+    syncToggle();
+    if (!shouldPlay() || scenes.length < 2) return;
+    const duration = Number(scenes[activeIndex].dataset.duration) || 6000;
+    steps[activeIndex].style.setProperty('--scene-duration', `${duration}ms`);
+    timer = window.setTimeout(() => showScene((activeIndex + 1) % scenes.length), duration);
+  }
+
+  function showScene(nextIndex) {
+    const previousIndex = activeIndex;
+    activeIndex = (nextIndex + scenes.length) % scenes.length;
+    scenes.forEach((scene, index) => {
+      const isActive = index === activeIndex;
+      scene.classList.toggle('is-active', isActive);
+      scene.classList.toggle('is-leaving', index === previousIndex && index !== activeIndex);
+      scene.setAttribute('aria-hidden', String(!isActive));
+      scene.inert = !isActive;
+      if (isActive) window.setTimeout(() => scene.classList.remove('is-leaving'), 950);
+    });
+    steps.forEach((step, index) => {
+      step.classList.remove('is-active');
+      step.classList.toggle('is-complete', index < activeIndex);
+      step.setAttribute('aria-current', index === activeIndex ? 'true' : 'false');
+    });
+    void steps[activeIndex].offsetWidth;
+    steps[activeIndex].classList.add('is-active');
+    animateHeroCounts(scenes[activeIndex]);
+    scheduleNext();
+  }
+
+  toggle.addEventListener('click', () => {
+    userPaused = !userPaused;
+    scheduleNext();
+  });
+
+  showreel.addEventListener('pointermove', (event) => {
+    if (reduceMotion.matches) return;
+    const bounds = showreel.getBoundingClientRect();
+    showreel.style.setProperty('--mx', ((event.clientX - bounds.left) / bounds.width - .5).toFixed(3));
+    showreel.style.setProperty('--my', ((event.clientY - bounds.top) / bounds.height - .5).toFixed(3));
+  });
+
+  if ('IntersectionObserver' in window) {
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting && entry.intersectionRatio > .25;
+      scheduleNext();
+    }, { threshold: [.25, .55] });
+    visibilityObserver.observe(showreel);
+  }
+
+  document.addEventListener('visibilitychange', scheduleNext);
+  reduceMotion.addEventListener('change', () => showScene(activeIndex));
+  showScene(0);
+}
+
+function initSectionSnap() {
+  const isHome = document.body.classList.contains('home-page-v3');
+  const desktop = window.matchMedia('(min-width: 761px) and (hover: hover)');
+  if (!isHome || !desktop.matches || reduceMotion.matches) return;
+
+  const panels = [...document.querySelectorAll('.snap-panel')];
+  if (panels.length < 2) return;
+  document.documentElement.classList.add('home-scroll-ready');
+
+  let locked = false;
+  let accumulatedDelta = 0;
+  let resetTimer = 0;
+
+  window.addEventListener('wheel', (event) => {
+    if (event.ctrlKey || locked || document.body.classList.contains('menu-open')) return;
+    if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+
+    const direction = Math.sign(event.deltaY);
+    const currentIndex = panels.reduce((closest, panel, index) => {
+      const distance = Math.abs(panel.getBoundingClientRect().top);
+      return distance < closest.distance ? { index, distance } : closest;
+    }, { index: 0, distance: Infinity }).index;
+    const targetIndex = currentIndex + direction;
+    if (targetIndex < 0 || targetIndex >= panels.length) return;
+
+    event.preventDefault();
+    accumulatedDelta += event.deltaY;
+    window.clearTimeout(resetTimer);
+    resetTimer = window.setTimeout(() => { accumulatedDelta = 0; }, 180);
+    if (Math.abs(accumulatedDelta) < 12) return;
+
+    accumulatedDelta = 0;
+    locked = true;
+    panels[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(() => { locked = false; }, 900);
+  }, { passive: false });
+}
+
+initHeroShowreel();
+initSectionSnap();
