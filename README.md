@@ -56,7 +56,7 @@ EventBridge가 6시간마다 Lambda를 실행합니다. Lambda는 Instagram API�
 
 ## 이미지 처리
 
-브랜드 자산은 `assets/home_logo.png`, `assets/onlyV_logo.png`만 관리합니다. 현장 이미지는 현재 Cafe24 CDN URL을 사용하므로, 완전한 AWS 독립 운영이 필요하면 S3로 이전하고 HTML의 이미지 URL을 교체해야 합니다.
+브랜드 로고는 `assets/home_logo.png`, `assets/onlyV_logo.png`에서 관리합니다. 기존 Cafe24 현장 이미지는 WebP로 최적화해 `assets/media/`에 보관하며, 운영 페이지는 이 로컬 자산만 사용합니다.
 
 ## SEO 반영 사항
 - 쇼핑몰 회원가입/장바구니/주문조회 관련 요소 제거

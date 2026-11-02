@@ -14,6 +14,10 @@ required_files=(
   sitemap.xml
   assets/home_logo.png
   assets/onlyV_logo.png
+  assets/media/vision-stage-smoke.webp
+  assets/media/vision-live-performance.webp
+  assets/media/vision-theater.webp
+  assets/media/vision-brand-banner.webp
 )
 
 for file in "${required_files[@]}"; do
@@ -76,6 +80,12 @@ fi
 
 if grep -R -E 'assets/(logo_square|logo_bigV|banner_logo)\.png' --include='*.html' --include='*.css' --include='*.js' .; then
   echo "A legacy logo is still referenced by a page." >&2
+  exit 1
+fi
+
+if grep -R -E '(file\.cafe24cos\.com|ecimg\.cafe24img\.com)' \
+  --include='*.html' --include='*.css' --include='*.js' .; then
+  echo "A deployable page still depends on a Cafe24-hosted asset." >&2
   exit 1
 fi
 
