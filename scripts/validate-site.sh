@@ -73,6 +73,11 @@ if grep -R "instagram.com/vision_catcher_" --include='*.html' .; then
   exit 1
 fi
 
+if grep -R "pf.kakao.com/_JVXJb" --include='*.html' .; then
+  echo "The legacy Kakao channel link remains in a page." >&2
+  exit 1
+fi
+
 if grep -R "vl_ent@naver.com" --include='*.html' .; then
   echo "The legacy contact email remains in a page." >&2
   exit 1
